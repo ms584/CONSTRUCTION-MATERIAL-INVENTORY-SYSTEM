@@ -1,0 +1,105 @@
+<?php
+session_start();
+include("../../db.php"); 
+
+
+// ระบบจัดการ "ลบสินค้า"
+
+if(isset($_GET['delete_id'])){
+    $del_id = $_GET['delete_id'];
+    
+    // ลบข้อมูลออกจากฐานข้อมูล
+    $delete_query = "DELETE FROM products WHERE product_id = '$del_id'";
+    if(mysqli_query($con, $delete_query)){
+        echo "<script>alert('ลบรายการสินค้าเรียบร้อยแล้ว!'); window.location.href='products_list.php';</script>";
+    } else {
+        echo "<script>alert('ไม่สามารถลบได้ เนื่องจากสินค้านี้อาจมีประวัติการรับเข้า/เบิกออกผูกอยู่'); window.location.href='products_list.php';</script>";
+    }
+}
+// --------------------------------------------------
+
+include "sidenav.php";
+include "topheader.php";
+?>
+
+<div class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-header card-header-primary" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h4 class="card-title">รายการสินค้าวัสดุก่อสร้าง (เช็คสต๊อก)</h4>
+                <p class="card-category">แสดงจำนวนคงเหลือและสถานะของสินค้า</p>
+            </div>
+            <a href="add_products.php" class="btn btn-info">เพิ่มสินค้าใหม่</a>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead class="text-primary">
+                  <th>รหัสสินค้า</th>
+                  <th>รูปภาพ</th>
+                  <th>ชื่อสินค้า</th>
+                  <th>หมวดหมู่/ยี่ห้อ</th>
+                  <th>ราคาขาย</th>
+                  <th>คงเหลือ</th>
+                  <th>หน่วย</th>
+                  <th>สถานที่เก็บ</th> <th>จัดการ</th>
+                </thead>
+                <tbody>
+                  <?php 
+                    $sql = "SELECT p.*, c.category_name, b.brand_name, u.unit_name 
+                            FROM products p 
+                            LEFT JOIN categories c ON p.category_id = c.category_id 
+                            LEFT JOIN brands b ON p.brand_id = b.brand_id 
+                            LEFT JOIN units u ON p.unit_id = u.unit_id
+                            ORDER BY p.product_id DESC";
+                    
+                    $result = mysqli_query($con, $sql);
+                    
+                    if(mysqli_num_rows($result) > 0) {
+                        while($row = mysqli_fetch_array($result)) {
+                            
+                            $stock_status = "";
+                            $text_color = "";
+                            if($row['stock_qty'] <= $row['min_stock']) {
+                                $stock_status = "<br><small class='text-danger'><b>(ใกล้หมด!)</b></small>";
+                                $text_color = "color: red; font-weight: bold;";
+                            }
+
+                            echo "<tr>";
+                            echo "<td>".$row['product_code']."</td>";
+                            echo "<td><img src='../../product_images/".$row['product_image']."' style='width:50px; height:50px; object-fit:cover; border-radius:5px;'></td>";
+                            echo "<td>".$row['product_name']."</td>";
+                            echo "<td>".$row['category_name']." <br> <small class='text-muted'>".$row['brand_name']."</small></td>";
+                            echo "<td>".number_format($row['selling_price'], 2)." ฿</td>";
+                            echo "<td style='".$text_color."'>".number_format($row['stock_qty']) . $stock_status ."</td>";
+                            echo "<td>".$row['unit_name']."</td>";
+                            
+                            //  2. ดึงข้อมูล location มาแสดงผลในตารางให้ตรงกับหัวตาราง
+                            echo "<td>".$row['location']."</td>";
+                            
+                            
+                            echo "<td>
+                                    <a href='edit_material.php?id=".$row['product_id']."' class='btn btn-warning btn-sm'><i class='material-icons'>edit</i></a>
+                                    <a href='products_list.php?delete_id=".$row['product_id']."' class='btn btn-danger btn-sm' onclick='return confirm(\"คุณแน่ใจหรือไม่ว่าต้องการลบสินค้านี้?\")'><i class='material-icons'>delete</i></a>
+                                  </td>";
+                            echo "</tr>";
+                        }
+                    } else {
+                        
+                        echo "<tr><td colspan='9' class='text-center'>ยังไม่มีรายการสินค้าในระบบ</td></tr>";
+                    }
+                  ?>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<?php include "footer.php"; ?>
