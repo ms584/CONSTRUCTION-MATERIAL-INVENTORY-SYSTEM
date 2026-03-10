@@ -2,6 +2,13 @@
 session_start();
 include("../../db.php");
 
+// ===== Admin, Manager, Stock เท่านั้น =====
+$_r = $_SESSION['role'] ?? '';
+if(!in_array($_r, ['Admin','Manager','Stock'])) {
+    echo "<script>alert('ขออภัย! ไม่มีสิทธิ์แก้ไขสินค้า'); window.location.href='index.php';</script>";
+    exit();
+}
+
 // ตรวจสอบว่ามี ID ส่งมาหรือไม่
 if(!isset($_GET['id'])){
     echo "<script>window.location.href='products_list.php';</script>";

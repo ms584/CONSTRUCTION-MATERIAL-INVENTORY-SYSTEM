@@ -14,7 +14,7 @@ if(isset($_GET['delete_id'])){
 }
 
 // ===== SORT LOGIC =====
-$allowed_sort = ['selling_price', 'stock_qty'];
+$allowed_sort = ['selling_price', 'stock_qty', 'product_code', 'product_name', 'category_name'];
 $allowed_dir  = ['asc', 'desc'];
 
 $sort_col = isset($_GET['sort']) && in_array($_GET['sort'], $allowed_sort) ? $_GET['sort'] : 'product_id';
@@ -50,12 +50,12 @@ include "topheader.php";
             <div class="table-responsive">
               <table class="table table-hover">
                 <thead class="text-primary">
-                  <th>รหัสสินค้า</th>
+                  <th><?php echo sort_link('product_code',   'รหัสสินค้า', $sort_col, $sort_dir); ?></th>
                   <th>รูปภาพ</th>
-                  <th>ชื่อสินค้า</th>
-                  <th>หมวดหมู่/ยี่ห้อ</th>
-                  <th><?php echo sort_link('selling_price', 'ราคาขาย', $sort_col, $sort_dir); ?></th>
-                  <th><?php echo sort_link('stock_qty',    'คงเหลือ',  $sort_col, $sort_dir); ?></th>
+                  <th><?php echo sort_link('product_name',   'ชื่อสินค้า', $sort_col, $sort_dir); ?></th>
+                  <th><?php echo sort_link('category_name',  'หมวดหมู่/ยี่ห้อ', $sort_col, $sort_dir); ?></th>
+                  <th><?php echo sort_link('selling_price',  'ราคาขาย', $sort_col, $sort_dir); ?></th>
+                  <th><?php echo sort_link('stock_qty',      'คงเหลือ',  $sort_col, $sort_dir); ?></th>
                   <th>หน่วย</th>
                   <th>สถานที่เก็บ</th>
                   <th>จัดการ</th>
@@ -67,7 +67,7 @@ include "topheader.php";
                             LEFT JOIN categories c ON p.category_id = c.category_id 
                             LEFT JOIN brands b ON p.brand_id = b.brand_id 
                             LEFT JOIN units u ON p.unit_id = u.unit_id
-                            ORDER BY p.$sort_col $sort_dir";
+                            ORDER BY " . ($sort_col === 'category_name' ? "c.$sort_col" : "p.$sort_col") . " $sort_dir";
                     
                     $result = mysqli_query($con, $sql);
                     

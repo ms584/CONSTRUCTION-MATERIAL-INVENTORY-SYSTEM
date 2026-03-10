@@ -2,6 +2,12 @@
 session_start();
 include("../../db.php");
 
+// ===== ADMIN เท่านั้น =====
+if(!isset($_SESSION['role']) || $_SESSION['role'] !== 'Admin') {
+    echo "<script>alert('ขออภัย! เฉพาะ Admin เท่านั้นที่สามารถเพิ่มพนักงานได้'); window.location.href='index.php';</script>";
+    exit();
+}
+
 // เมื่อกดปุ่ม "บันทึกข้อมูลพนักงาน"
 if(isset($_POST['btn_save'])) {
     $full_name = $_POST['full_name'];

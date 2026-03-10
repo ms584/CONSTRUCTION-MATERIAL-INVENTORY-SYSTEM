@@ -2,6 +2,13 @@
 session_start();
 include("../../db.php");
 
+// ===== Admin และ Stock เท่านั้น =====
+$_r = $_SESSION['role'] ?? '';
+if($_r !== 'Admin' && $_r !== 'Stock') {
+    echo "<script>alert('ขออภัย! เฉพาะ Admin และ Stock เท่านั้น'); window.location.href='index.php';</script>";
+    exit();
+}
+
 if(isset($_POST['btn_stock_in'])) {
     $supplier_id = $_POST['supplier_id'];
     $invoice_no = $_POST['invoice_no'];

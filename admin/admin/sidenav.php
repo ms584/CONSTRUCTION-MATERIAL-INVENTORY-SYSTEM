@@ -9,6 +9,14 @@
     unset($_SESSION['admin_name']);
     header("location: .././login.php");
   }
+  $__role = $_SESSION['role'] ?? '';
+  $isAdmin    = ($__role === 'Admin');
+  $isManager  = ($__role === 'Manager');
+  $isCashier  = ($__role === 'Cashier');
+  $isStock    = ($__role === 'Stock');
+  $isAdminOrManager = ($isAdmin || $isManager);
+  $canStock   = ($isAdmin || $isStock);           // รับของเข้า, จัดการสินค้า
+  $canSale    = ($isAdmin || $isManager || $isCashier); // เปิดบิลขาย
 ?>
 <!DOCTYPE html>
 <html lang="th">
@@ -39,75 +47,116 @@
 </div>
             <div class="sidebar-wrapper">
                 <ul class="nav">
-                    <li class="nav-item active  ">
+                    <!-- Dashboard — ทุก Role -->
+                    <li class="nav-item active">
                         <a class="nav-link" href="index.php">
                             <i class="material-icons">dashboard</i>
                             <p>หน้าหลัก (Dashboard)</p>
                         </a>
                     </li>
-                    
-                    <li class="nav-item ">
+
+                    <!-- เช็คสต๊อก — ทุก Role -->
+                    <li class="nav-item">
                         <a class="nav-link" href="products_list.php">
                         <i class="material-icons">list</i>
                         <p>เช็คสต๊อก (Inventory)</p>
                         </a>
                     </li>
-                    <li class="nav-item ">
+
+                    <?php if($isAdmin || $isManager || $isStock): ?>
+                    <!-- เพิ่มสินค้า — Admin, Manager, Stock -->
+                    <li class="nav-item">
                         <a class="nav-link" href="add_products.php">
                         <i class="material-icons">add_box</i>
                         <p>เพิ่มสินค้าใหม่ (Add Material)</p>
                         </a>
                     </li>
-                    <li class="nav-item ">
+                    <?php endif; ?>
+
+                    <?php if($canStock): ?>
+                    <!-- รับของเข้า — Admin, Stock -->
+                    <li class="nav-item">
                         <a class="nav-link" href="stock_in.php">
                         <i class="material-icons">input</i>
                         <p>รับของเข้า (Stock In)</p>
                         </a>
-                    <li class="nav-item ">
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="receiving_history.php">
                         <i class="material-icons">history</i>
                         <p>ประวัติรับของเข้า (Receiving)</p>
                         </a>
                     </li>
-                    </li>
-                    <li class="nav-item ">
+                    <?php endif; ?>
+
+                    <?php if($canSale): ?>
+                    <!-- เบิก/ขาย — Admin, Manager, Cashier -->
+                    <li class="nav-item">
                         <a class="nav-link" href="stock_out.php">
                         <i class="material-icons">shopping_cart</i>
                         <p>เบิก/ขายสินค้า (Stock Out)</p>
                         </a>
                     </li>
+                    <?php endif; ?>
 
-                    <li class="nav-item ">
+                    <!-- ประวัติบิล — Admin, Manager, Cashier -->
+                    <?php if($isAdmin || $isManager || $isCashier): ?>
+                    <li class="nav-item">
                         <a class="nav-link" href="salesofday.php">
                             <i class="material-icons">library_books</i>
                             <p>ประวัติการออกบิล (Bill History)</p>
                         </a>
                     </li>
-                    <li class="nav-item ">
+                    <?php endif; ?>
+
+                    <?php if($isAdminOrManager): ?>
+                    <!-- จัดการคูปอง — Admin, Manager -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="manage_coupons.php">
+                            <i class="material-icons">local_offer</i>
+                            <p>จัดการคูปอง (Coupons)</p>
+                        </a>
+                    </li>
+                    <?php endif; ?>
+
+                    <?php if($isAdminOrManager): ?>
+                    <!-- ซัพพลายเออร์ / ลูกค้า — Admin, Manager -->
+                    <li class="nav-item">
                         <a class="nav-link" href="suppliers_list.php">
                              <i class="material-icons">local_shipping</i>
                               <p>บริษัทคู่ค้า (Suppliers)</p>
                         </a>
                     </li>
-                    <li class="nav-item ">
+                    <li class="nav-item">
                         <a class="nav-link" href="customers_list.php">
                         <i class="material-icons">recent_actors</i>
                         <p>ฐานข้อมูลลูกค้า (Customers)</p>
                              </a>
                     </li>
-                    <li class="nav-item ">
+                    <?php endif; ?>
+
+                    <?php if($isAdmin): ?>
+                    <!-- จัดการพนักงาน — Admin เท่านั้น -->
+                    <li class="nav-item">
                         <a class="nav-link" href="addemployees.php">
                             <i class="material-icons">person_add</i>
                             <p>เพิ่มพนักงาน (Add Users)</p>
                         </a>
                     </li>
-                     <li class="nav-item ">
+                    <?php endif; ?>
+
+                    <?php if($isAdminOrManager): ?>
+                    <!-- จัดการผู้ใช้งาน — Admin, Manager -->
+                    <li class="nav-item">
                         <a class="nav-link" href="manageuser.php">
                             <i class="material-icons">people</i>
                             <p>จัดการผู้ใช้งาน (Manage Users)</p>
                         </a>
                     </li>
-                    <li class="nav-item ">
+                    <?php endif; ?>
+
+                    <!-- ตั้งค่าบัญชี — ทุก Role -->
+                    <li class="nav-item">
                         <a class="nav-link" href="profile.php">
                             <i class="material-icons icon-image-preview">settings</i>
                             <p>ตั้งค่าบัญชี (Settings)</p>

@@ -2,6 +2,13 @@
 session_start();
 include("../../db.php"); // ดึงไฟล์เชื่อมต่อ DB
 
+// ===== Admin, Manager, Stock เท่านั้น =====
+$_r = $_SESSION['role'] ?? '';
+if(!in_array($_r, ['Admin','Manager','Stock'])) {
+    echo "<script>alert('ขออภัย! ไม่มีสิทธิ์เพิ่มสินค้า'); window.location.href='index.php';</script>";
+    exit();
+}
+
 // โค้ดสำหรับบันทึกข้อมูลเมื่อกดปุ่ม Submit
 if(isset($_POST['btn_save'])) {
     $product_code = $_POST['product_code'];
@@ -163,7 +170,23 @@ include "topheader.php";
                 </div>
                 <div class="col-md-6">
                   <label>รูปภาพสินค้า</label>
-                  <input type="file" name="picture" class="btn btn-fill btn-secondary" accept="image/*">
+                  <div>
+                    <!-- hidden real input -->
+                    <input type="file" name="picture" id="picture-input" accept=".jpg,.jpeg,.png,.webp,.gif"
+                           style="display:none;" onchange="previewNewImage(this)">
+                    <!-- styled button -->
+                    <button type="button" class="btn btn-warning"
+                            onclick="document.getElementById('picture-input').click()"
+                            style="margin-bottom:6px;">
+                      <i class="material-icons" style="vertical-align:middle; font-size:18px;">add_photo_alternate</i>
+                      เลือกรูปภาพ
+                    </button>
+                    <span id="pic-filename" style="color:#aaa; font-size:13px; margin-left:8px;">ยังไม่ได้เลือกไฟล์</span>
+                    <div id="pic-preview-wrap" style="display:none; margin-top:8px;">
+                      <img id="pic-preview" src="" style="width:80px; height:80px; object-fit:cover; border-radius:8px; border:2px solid #555;">
+                    </div>
+                    <div style="color:#888; font-size:12px; margin-top:4px;">รูปแบบที่รองรับ: JPG, PNG, WEBP, GIF (ไม่เกิน 5MB)</div>
+                  </div>
                 </div>
               </div>
 
@@ -178,3 +201,17 @@ include "topheader.php";
 </div>
 
 <?php include "footer.php"; ?>
+<script>
+function previewNewImage(input) {
+    var filename = input.files[0] ? input.files[0].name : 'ยังไม่ได้เลือกไฟล์';
+    document.getElementById('pic-filename').textContent = filename;
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('pic-preview').src = e.target.result;
+            document.getElementById('pic-preview-wrap').style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>

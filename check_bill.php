@@ -6,13 +6,12 @@ $error_msg = "";
 
 if(isset($_POST['btn_check'])) {
     $receipt_no = mysqli_real_escape_string($con, $_POST['receipt_no']);
-    $phone      = mysqli_real_escape_string($con, $_POST['phone']);
 
     $sql_check = "SELECT s.*, c.customer_name, c.phone, c.address, e.full_name as emp_name 
                   FROM sales s 
                   LEFT JOIN customers c ON s.customer_id = c.customer_id 
                   LEFT JOIN employees e ON s.employee_id = e.employee_id
-                  WHERE s.receipt_no = '$receipt_no' AND c.phone = '$phone'";
+                  WHERE s.receipt_no = '$receipt_no'";
     
     $query_check = mysqli_query($con, $sql_check);
 
@@ -27,7 +26,7 @@ if(isset($_POST['btn_check'])) {
 
         $pay_status_color = ($bill['payment_status'] == 'ชำระแล้ว') ? '#16a34a' : '#dc2626';
     } else {
-        $error_msg = "ไม่พบบิลเลขที่นี้ หรือเบอร์โทรศัพท์ไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง";
+        $error_msg = "ไม่พบบิลเลขที่ \"$receipt_no\" กรุณาตรวจสอบเลขที่บิลอีกครั้ง";
     }
 }
 ?>
@@ -229,13 +228,11 @@ if(isset($_POST['btn_check'])) {
     <div class="row">
       <div class="col-md-8 col-md-offset-2 text-center" style="margin-bottom: 30px;">
         <h2 style="color: #D10024; font-weight: 700;">ตรวจสอบบิล / ใบเสร็จรับเงิน</h2>
-        <p style="color: #555;">กรุณากรอกเลขที่บิลและเบอร์โทรศัพท์ของคุณเพื่อดูรายละเอียดรายการสินค้า</p>
+        <p style="color: #555;">กรุณากรอกเลขที่บิลเพื่อดูรายละเอียดรายการสินค้า</p>
         
         <form action="" method="post" class="form-inline" style="margin-top: 20px; justify-content: center;">
             <input type="text" name="receipt_no" class="input" placeholder="เลขที่บิล (เช่น REC-...)" required
-                   style="width: 240px; margin-right: 8px; border-radius:6px;">
-            <input type="text" name="phone" class="input" placeholder="เบอร์โทรศัพท์ที่แจ้งไว้" required
-                   style="width: 190px; margin-right: 8px; border-radius:6px;">
+                   style="width: 300px; margin-right: 8px; border-radius:6px;">
             <button type="submit" name="btn_check" class="primary-btn" style="border:none; padding: 10px 22px; border-radius:6px;">
                 ค้นหาบิล
             </button>
@@ -326,15 +323,33 @@ if(isset($_POST['btn_check'])) {
                 ?>
             </tbody>
             <tfoot>
+                <?php
+                $subtotal_db  = (!empty($bill['subtotal_amount']) && $bill['subtotal_amount'] > 0) ? (float)$bill['subtotal_amount'] : $sum_total;
+                $discount_db  = (float)($bill['discount_amount'] ?? 0);
+                $net_total    = (float)($bill['total_amount'] ?? $sum_total);
+                $discount_lbl = $bill['discount_type'] ?? '';
+                ?>
+                <?php if($discount_db > 0): ?>
                 <tr>
-                    <td colspan="4" style="text-align:right; color:#D10024;">ยอดชำระทั้งสิ้น:</td>
-                    <td style="text-align:right; color:#D10024;">฿ <?php echo number_format($sum_total, 2); ?></td>
+                    <td colspan="4" style="text-align:right; color:#6b7280; font-size:13px;">ยอดรวม (ก่อนลด):</td>
+                    <td style="text-align:right; color:#6b7280; font-size:13px;">฿ <?php echo number_format($subtotal_db, 2); ?></td>
+                </tr>
+                <tr>
+                    <td colspan="4" style="text-align:right; color:#16a34a; font-size:13px;">
+                        ส่วนลด<?php echo $discount_lbl ? " ($discount_lbl)" : ''; ?>:
+                    </td>
+                    <td style="text-align:right; color:#16a34a; font-size:13px; font-weight:600;">- ฿ <?php echo number_format($discount_db, 2); ?></td>
+                </tr>
+                <?php endif; ?>
+                <tr>
+                    <td colspan="4" style="text-align:right; color:#D10024; font-size:16px; font-weight:700;">ยอดชำระสุทธิ:</td>
+                    <td style="text-align:right; color:#D10024; font-size:16px; font-weight:700;">฿ <?php echo number_format($net_total, 2); ?></td>
                 </tr>
             </tfoot>
         </table>
 
         <?php 
-        $shirt_qty = floor($sum_total / 10000);
+        $shirt_qty = floor($subtotal_db / 10000);
         if($shirt_qty >= 1): 
         ?>
         <!-- PROMO BANNER -->

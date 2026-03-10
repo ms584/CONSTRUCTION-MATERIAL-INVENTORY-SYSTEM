@@ -126,15 +126,35 @@ include "topheader.php";
                       ?>
                     </tbody>
                     <tfoot>
+                        <?php 
+                        // ใช้ subtotal_amount จาก DB ถ้ามี (มีระบบส่วนลด) ไม่งั้น fallback เป็น sum_total
+                        $subtotal_db  = (!empty($bill['subtotal_amount']) && $bill['subtotal_amount'] > 0) ? (float)$bill['subtotal_amount'] : $sum_total;
+                        $discount_db  = (float)($bill['discount_amount'] ?? 0);
+                        $net_total    = (float)($bill['total_amount'] ?? $sum_total);
+                        $discount_lbl = $bill['discount_type'] ?? '';
+                        ?>
+                        <?php if($discount_db > 0): ?>
                         <tr>
-                            <td colspan="5" style="text-align:right; color:#D10024;">ยอดรวมทั้งสิ้น:</td>
-                            <td style="text-align:right; color:#D10024;">฿ <?php echo number_format($sum_total, 2); ?></td>
+                            <td colspan="5" style="text-align:right; color:#6b7280; font-size:13px;">ยอดรวม (ก่อนลด):</td>
+                            <td style="text-align:right; color:#6b7280; font-size:13px;">฿ <?php echo number_format($subtotal_db, 2); ?></td>
+                        </tr>
+                        <tr>
+                            <td colspan="5" style="text-align:right; color:#16a34a; font-size:13px;">
+                                ส่วนลด<?php echo $discount_lbl ? " ($discount_lbl)" : ''; ?>:
+                            </td>
+                            <td style="text-align:right; color:#16a34a; font-size:13px; font-weight:600;">- ฿ <?php echo number_format($discount_db, 2); ?></td>
+                        </tr>
+                        <?php endif; ?>
+                        <tr>
+                            <td colspan="5" style="text-align:right; color:#D10024; font-size:16px; font-weight:700;">ยอดชำระสุทธิ:</td>
+                            <td style="text-align:right; color:#D10024; font-size:16px; font-weight:700;">฿ <?php echo number_format($net_total, 2); ?></td>
                         </tr>
                     </tfoot>
                 </table>
 
                 <?php 
-                $shirt_qty = floor($sum_total / 10000);
+                // เสื้อแถมคิดจาก subtotal (ยอดก่อนลด)
+                $shirt_qty = floor($subtotal_db / 10000);
                 if($shirt_qty >= 1): 
                 ?>
                 <!-- PROMO BANNER -->
