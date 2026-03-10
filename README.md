@@ -297,3 +297,46 @@
 | Packaging rate ไม่ถูกส่งไป PHP | Inject `<input>` ใน `<tr>` ตอน submit — browser ไม่รวม | ใส่ hidden input ใน row ตั้งแต่ต้น, JS update `.value` เมื่อเลือก |
 
 ---
+
+---
+
+# 📋 สรุปการแก้ไขครั้งที่ 7
+
+## 1. 🔐 Password Hashing
+
+เปลี่ยนจาก **plain text password** เป็น **bcrypt hash** ด้วย PHP `password_hash()` / `password_verify()`
+
+| ไฟล์ | การเปลี่ยนแปลง |
+| :--- | :--- |
+| `admin/login.php` | ค้นหาด้วย username → `password_verify()` แทนการเปรียบ plain text ใน SQL |
+| `admin/admin/addemployees.php` | `password_hash()` ก่อน INSERT ทุกครั้ง |
+| `admin/admin/reset_password.php` | `password_hash()` ก่อน UPDATE ทุกครั้ง |
+
+### ✨ ฟีเจอร์พิเศษ — Auto-Upgrade Legacy Passwords
+พนักงานเก่าที่ยังมีรหัสผ่านแบบ plain text ใน DB เมื่อ **login ครั้งแรก** ระบบจะ:
+1. ตรวจสอบ `password_verify()` → ล้มเหลว (ยังไม่ hash)
+2. เปรียบเทียบ plain text โดยตรง → ผ่าน
+3. **อัพเกรด hash ให้อัตโนมัติ** ด้วย `UPDATE employees SET password = '$hashed'`
+
+> ไม่ต้อง reset รหัสผ่านพนักงานทุกคน ระบบจัดการ migration เองผ่าน login ✅
+
+---
+
+## 2. 📦 Packaging Management ใน Edit Material (`edit_material.php`)
+
+เพิ่ม Card **"สูตร Packaging"** ใต้ฟอร์มแก้ไขสินค้า รองรับการจัดการ Packaging แบบ real-time ไม่ต้อง reload
+
+### PHP AJAX Handler (ด้านบนไฟล์)
+- `pkg_action = 'add'` → `INSERT ... ON DUPLICATE KEY UPDATE` (upsert)
+- `pkg_action = 'delete'` → `DELETE` ตาม `id + product_id`
+- ตอบกลับเป็น JSON
+
+### UI Features
+| ส่วน | รายละเอียด |
+| :--- | :--- |
+| **ตาราง Packaging** | แสดง packaging ที่มีอยู่ พร้อม label `1 พาเหรด = 40 ถุง` |
+| **ฟอร์มเพิ่มใหม่** | กรอกชื่อ + rate → preview real-time สีเขียว |
+| **ปุ่มลบ** 🗑️ | ลบทีละแถว พร้อม confirm — ไม่ต้อง reload |
+| **Base Unit แสดง** | ดึง `base_unit` ของสินค้า มาแสดงใน label และ preview |
+
+---

@@ -15,25 +15,39 @@ if(isset($_POST['login_admin'])) {
     $username = mysqli_real_escape_string($con, $_POST['admin_username']);
     $password = mysqli_real_escape_string($con, $_POST['password']);
 
-    // ค้นหาพนักงานจากตาราง employees
-    $sql = "SELECT * FROM employees WHERE username = '$username' AND password = '$password'";
+    // ค้นหาพนักงานจากตาราง employees (ด้วย username เท่านั้น)
+    $sql = "SELECT * FROM employees WHERE username = '$username'";
     $result = mysqli_query($con, $sql);
 
     if(mysqli_num_rows($result) > 0) {
         $row = mysqli_fetch_array($result);
-        
-        // เก็บข้อมูลพนักงานลง Session
-        $_SESSION['admin_name'] = $row['username'];
-        $_SESSION['employee_id'] = $row['employee_id'];
-        $_SESSION['role'] = $row['role'];
-        $_SESSION['full_name'] = $row['full_name'];       
-        $_SESSION['employee_id'] = $row['employee_id'];
-        $_SESSION['full_name'] = $row['full_name'];
-        $_SESSION['role'] = $row['role'];
+        $stored = $row['password'];
+        $valid = false;
 
-        // เด้งเข้าหน้าหลัก
-        echo "<script>alert('เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับคุณ ".$row['full_name']."'); window.location.href='admin/index.php';</script>";
-        exit();
+        if(password_verify($password, $stored)) {
+            // รหัสผ่าน hash แล้ว — ตรวจสอบปกติ
+            $valid = true;
+        } elseif($password === $stored) {
+            // ==== Legacy: plain text (auto-upgrade เป็น hash) ====
+            $hashed = password_hash($password, PASSWORD_DEFAULT);
+            $eid = $row['employee_id'];
+            mysqli_query($con, "UPDATE employees SET password = '$hashed' WHERE employee_id = '$eid'");
+            $valid = true;
+        }
+
+        if($valid) {
+            // เก็บข้อมูลพนักงานลง Session
+            $_SESSION['admin_name']   = $row['username'];
+            $_SESSION['employee_id']  = $row['employee_id'];
+            $_SESSION['role']         = $row['role'];
+            $_SESSION['full_name']    = $row['full_name'];
+
+            // เด้งเข้าหน้าหลัก
+            echo "<script>alert('เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับคุณ ".$row['full_name']."'); window.location.href='admin/index.php';</script>";
+            exit();
+        } else {
+            $error_msg = "ชื่อผู้ใช้งาน หรือ รหัสผ่าน ไม่ถูกต้อง!";
+        }
     } else {
         // ถ้ารหัสผิด ให้เก็บข้อความ error ไว้แสดงผลในฟอร์ม
         $error_msg = "ชื่อผู้ใช้งาน หรือ รหัสผ่าน ไม่ถูกต้อง!";

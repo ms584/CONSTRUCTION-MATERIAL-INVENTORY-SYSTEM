@@ -13,7 +13,7 @@ if(isset($_POST['btn_save'])) {
     $full_name = $_POST['full_name'];
     $role = $_POST['role'];
     $username = $_POST['username'];
-    $password = $_POST['password']; 
+    $password = password_hash(trim($_POST['password']), PASSWORD_DEFAULT); // hash ก่อนบันทึก
 
     // เช็คก่อนว่า Username นี้มีคนใช้ไปไหม
     $check_query = mysqli_query($con, "SELECT * FROM employees WHERE username = '$username'");

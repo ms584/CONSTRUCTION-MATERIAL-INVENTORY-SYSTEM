@@ -9,6 +9,40 @@ if(!in_array($_r, ['Admin','Manager','Stock'])) {
     exit();
 }
 
+// ===== AJAX: จัดการ Packaging =====
+if(isset($_POST['pkg_action'])) {
+    header('Content-Type: application/json');
+    $pid = (int)($_POST['product_id'] ?? 0);
+
+    if($_POST['pkg_action'] === 'add') {
+        $unit = mysqli_real_escape_string($con, trim($_POST['package_unit'] ?? ''));
+        $rate = (float)($_POST['units_per_package'] ?? 0);
+        if($pid && $unit && $rate > 0) {
+            $q = "INSERT INTO product_packaging (product_id, package_unit, units_per_package)
+                  VALUES ('$pid','$unit','$rate')
+                  ON DUPLICATE KEY UPDATE units_per_package = '$rate'";
+            if(mysqli_query($con, $q)) {
+                $new_id = mysqli_insert_id($con);
+                echo json_encode(['ok'=>true,'id'=>$new_id,'unit'=>$unit,'rate'=>$rate]);
+            } else {
+                echo json_encode(['ok'=>false,'msg'=>mysqli_error($con)]);
+            }
+        } else {
+            echo json_encode(['ok'=>false,'msg'=>'ข้อมูลไม่ครบ']);
+        }
+    }
+
+    if($_POST['pkg_action'] === 'delete') {
+        $pkg_id = (int)($_POST['pkg_id'] ?? 0);
+        if(mysqli_query($con, "DELETE FROM product_packaging WHERE id = '$pkg_id' AND product_id = '$pid'")) {
+            echo json_encode(['ok'=>true]);
+        } else {
+            echo json_encode(['ok'=>false,'msg'=>mysqli_error($con)]);
+        }
+    }
+    exit();
+}
+
 // ตรวจสอบว่ามี ID ส่งมาหรือไม่
 if(!isset($_GET['id'])){
     echo "<script>window.location.href='products_list.php';</script>";
@@ -236,6 +270,161 @@ include "topheader.php";
     </div>
   </div>
 </div>
+
+<?php
+// ดึง packaging ที่มีอยู่แล้ว
+$pkg_list = [];
+$pkg_q = mysqli_query($con, "SELECT * FROM product_packaging WHERE product_id = '$edit_id' ORDER BY id");
+while($pk = mysqli_fetch_assoc($pkg_q)) $pkg_list[] = $pk;
+$base = $p_row['base_unit'] ?? '';
+?>
+
+<!-- ===== Packaging Section ===== -->
+<div class="content" style="padding-top:0;">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-header card-header-info" style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <h4 class="card-title"><i class="material-icons" style="vertical-align:middle;margin-right:6px;">inventory_2</i>สูตร Packaging</h4>
+              <p class="card-category">หน่วยหลัก (Base Unit): <b><?php echo $base ?: '<span style="color:#f4a738">ยังไม่กำหนด</span>'; ?></b></p>
+            </div>
+          </div>
+          <div class="card-body">
+
+            <!-- ตารางแสดง packaging ที่มีอยู่ -->
+            <table class="table table-hover" id="pkg-table">
+              <thead class="text-info">
+                <th>หน่วย Packaging</th>
+                <th>Conversion Rate</th>
+                <th>ตัวอย่าง</th>
+                <th></th>
+              </thead>
+              <tbody id="pkg-tbody">
+                <?php foreach($pkg_list as $pk): ?>
+                <tr id="pkg-row-<?php echo $pk['id']; ?>">
+                  <td><b><?php echo htmlspecialchars($pk['package_unit']); ?></b></td>
+                  <td>× <?php echo $pk['units_per_package']; ?></td>
+                  <td><small class="text-success">1 <?php echo $pk['package_unit']; ?> = <?php echo $pk['units_per_package']; ?> <?php echo $base; ?></small></td>
+                  <td>
+                    <button class="btn btn-sm btn-danger" onclick="deletePkg(<?php echo $pk['id']; ?>)">
+                      <i class="material-icons" style="font-size:16px;vertical-align:middle;">delete</i>
+                    </button>
+                  </td>
+                </tr>
+                <?php endforeach; ?>
+                <?php if(empty($pkg_list)): ?>
+                <tr id="pkg-empty"><td colspan="4" class="text-center text-muted">ยังไม่มีสูตร Packaging</td></tr>
+                <?php endif; ?>
+              </tbody>
+            </table>
+
+            <!-- ฟอร์มเพิ่ม Packaging ใหม่ -->
+            <div style="background:#1e2235;border-radius:10px;padding:18px 20px;margin-top:10px;">
+              <h6 style="color:#00bcd4;margin-bottom:14px;"><i class="material-icons" style="vertical-align:middle;font-size:18px;">add_circle</i> เพิ่มสูตร Packaging</h6>
+              <div class="row align-items-end">
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>ชื่อหน่วย Packaging</label>
+                    <input type="text" id="new-pkg-unit" class="form-control" placeholder="เช่น พาเหรด, ลัง, กล่อง">
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>จำนวน <?php echo $base ?: 'Base Unit'; ?> ต่อ 1 หน่วย</label>
+                    <input type="number" id="new-pkg-rate" class="form-control" placeholder="เช่น 40" min="0.01" step="0.01" oninput="updatePkgPreview()">
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group">
+                    <label>ตัวอย่าง</label>
+                    <div id="pkg-preview" style="color:#4caf50;font-size:13px;padding-top:8px;">—</div>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <button type="button" class="btn btn-info btn-block mb-3" onclick="addPkg()">
+                    <i class="material-icons" style="vertical-align:middle;font-size:16px;">save</i> บันทึก
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var PRODUCT_ID = <?php echo (int)$edit_id; ?>;
+var BASE_UNIT  = '<?php echo addslashes($base); ?>';
+
+function updatePkgPreview() {
+    var unit = document.getElementById('new-pkg-unit').value.trim();
+    var rate = parseFloat(document.getElementById('new-pkg-rate').value);
+    var p = document.getElementById('pkg-preview');
+    if(unit && rate > 0) {
+        p.textContent = '1 ' + unit + ' = ' + rate + ' ' + (BASE_UNIT || 'Base Unit');
+    } else {
+        p.textContent = '—';
+    }
+}
+document.getElementById('new-pkg-unit').addEventListener('input', updatePkgPreview);
+
+function addPkg() {
+    var unit = document.getElementById('new-pkg-unit').value.trim();
+    var rate = parseFloat(document.getElementById('new-pkg-rate').value);
+    if(!unit || !rate || rate <= 0) { alert('กรุณากรอกชื่อหน่วยและค่า Rate ให้ครบ'); return; }
+    var fd = new FormData();
+    fd.append('pkg_action','add');
+    fd.append('product_id', PRODUCT_ID);
+    fd.append('package_unit', unit);
+    fd.append('units_per_package', rate);
+    fetch('edit_material.php?id=' + PRODUCT_ID, {method:'POST', body:fd})
+    .then(r=>r.json()).then(function(d) {
+        if(d.ok) {
+            // ลบแถว empty ถ้ามี
+            var em = document.getElementById('pkg-empty');
+            if(em) em.remove();
+            // เพิ่มแถวใหม่
+            var tr = document.createElement('tr');
+            tr.id = 'pkg-row-' + d.id;
+            tr.innerHTML = '<td><b>' + d.unit + '</b></td>'
+                + '<td>× ' + d.rate + '</td>'
+                + '<td><small style="color:#4caf50;">1 ' + d.unit + ' = ' + d.rate + ' ' + BASE_UNIT + '</small></td>'
+                + '<td><button class="btn btn-sm btn-danger" onclick="deletePkg('+d.id+')"><i class="material-icons" style="font-size:16px;vertical-align:middle;">delete</i></button></td>';
+            document.getElementById('pkg-tbody').appendChild(tr);
+            document.getElementById('new-pkg-unit').value = '';
+            document.getElementById('new-pkg-rate').value = '';
+            document.getElementById('pkg-preview').textContent = '—';
+        } else { alert('Error: ' + d.msg); }
+    });
+}
+
+function deletePkg(pkg_id) {
+    if(!confirm('ลบสูตร Packaging นี้ใช่ไหม?')) return;
+    var fd = new FormData();
+    fd.append('pkg_action','delete');
+    fd.append('product_id', PRODUCT_ID);
+    fd.append('pkg_id', pkg_id);
+    fetch('edit_material.php?id=' + PRODUCT_ID, {method:'POST', body:fd})
+    .then(r=>r.json()).then(function(d) {
+        if(d.ok) {
+            var row = document.getElementById('pkg-row-' + pkg_id);
+            if(row) row.remove();
+            // ถ้าไม่มีแถวเหลือ แสดง empty
+            if(document.querySelectorAll('#pkg-tbody tr').length === 0) {
+                var em = document.createElement('tr');
+                em.id = 'pkg-empty';
+                em.innerHTML = '<td colspan="4" class="text-center text-muted">ยังไม่มีสูตร Packaging</td>';
+                document.getElementById('pkg-tbody').appendChild(em);
+            }
+        } else { alert('Error: ' + d.msg); }
+    });
+}
+</script>
 
 <?php include "footer.php"; ?>
 

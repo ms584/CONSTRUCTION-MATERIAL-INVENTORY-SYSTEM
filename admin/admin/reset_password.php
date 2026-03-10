@@ -39,7 +39,8 @@ if(isset($_POST['btn_reset'])) {
     } elseif($new_pass !== $confirm_pass) {
         $error_msg = "รหัสผ่านใหม่และการยืนยันไม่ตรงกัน!";
     } else {
-        $update_sql = "UPDATE employees SET password = '$new_pass' WHERE employee_id = '$emp_id'";
+        $hashed = password_hash($new_pass, PASSWORD_DEFAULT);
+        $update_sql = "UPDATE employees SET password = '$hashed' WHERE employee_id = '$emp_id'";
         if(mysqli_query($con, $update_sql)) {
             echo "<script>alert('เปลี่ยนรหัสผ่านให้ " . $emp['full_name'] . " สำเร็จแล้ว!'); window.location.href='manageuser.php';</script>";
             exit();
