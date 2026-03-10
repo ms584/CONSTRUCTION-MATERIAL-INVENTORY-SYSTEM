@@ -1,3 +1,98 @@
+# 🏗️ CONSTRUCTSHOP — ระบบจัดการสต็อกวัสดุก่อสร้าง
+
+> ระบบ POS และ Inventory Management สำหรับร้านวัสดุก่อสร้าง รองรับการรับสินค้าเข้า/เบิกออก, ระบบขาย, coupon, unit conversion และการจัดการพนักงานหลาย Role
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+| :--- | :--- |
+| **Backend** | PHP 8.x (procedural) |
+| **Database** | MySQL 8.x via `mysqli_*` |
+| **Frontend** | HTML5, CSS3, JavaScript (Vanilla) |
+| **UI Framework** | Bootstrap 4 + Material Dashboard |
+| **Icons** | Material Icons (Google) |
+| **Server** | Apache (XAMPP) |
+| **Password** | PHP `password_hash()` / `password_verify()` — bcrypt |
+| **Session** | PHP Native Session + RBAC (Admin / Manager / Cashier / Stock) |
+
+---
+
+## 🚀 วิธีรันโปรเจค
+
+### ข้อกำหนด
+- [XAMPP](https://www.apachefriends.org/) (PHP 8.x + MySQL + Apache)
+
+### ขั้นตอน
+
+**1. Clone หรือวางโปรเจคใน htdocs**
+```
+g:\xampp\htdocs\construction_shop\
+```
+
+**2. เริ่ม Apache + MySQL ใน XAMPP Control Panel**
+
+**3. สร้างฐานข้อมูล**
+- เปิด [phpMyAdmin](http://localhost/phpmyadmin)
+- สร้าง database ชื่อ **`db_construction_materials`**
+- Import ไฟล์ตามลำดับ:
+
+| ลำดับ | ไฟล์ | หมายเหตุ |
+| :--- | :--- | :--- |
+| 1 | `Database/Database.sql` | โครงสร้างทั้งหมด |
+| 2 | `Database/discount_system.sql` | ตาราง coupons + คอลัมน์ discount |
+| 3 | `Database/packaging_system.sql` | ตาราง product_packaging + base_unit |
+| 4 | `Database/mockdata.sql` | ข้อมูลตัวอย่าง (optional) |
+
+**4. เข้าระบบ**
+```
+http://localhost/construction_shop/admin/login.php
+```
+
+| Username | Password | Role |
+| :--- | :--- | :--- |
+| `admin` | `admin123` | Admin |
+
+> ✅ รหัสผ่านจะถูก hash อัตโนมัติเมื่อ login ครั้งแรก
+
+**5. หน้าร้านค้าลูกค้า (ถ้ามี)**
+```
+http://localhost/construction_shop/store.php
+```
+
+---
+
+## 🗂️ โครงสร้างไฟล์หลัก
+
+```
+construction_shop/
+├── admin/
+│   ├── login.php               # หน้า Login
+│   └── admin/
+│       ├── index.php           # Dashboard
+│       ├── products_list.php   # รายการสินค้า
+│       ├── add_products.php    # เพิ่มสินค้า + Packaging
+│       ├── edit_material.php   # แก้ไขสินค้า + Packaging
+│       ├── stock_in.php        # รับสินค้าเข้า + Unit Conversion
+│       ├── stock_out.php       # เบิก/ขายสินค้า + Coupon
+│       ├── salesofday.php      # ประวัติบิล
+│       ├── receiving_history.php # ประวัติรับของ
+│       ├── manage_coupons.php  # จัดการ Coupon
+│       ├── manageuser.php      # จัดการพนักงาน
+│       └── get_packaging.php   # AJAX endpoint สำหรับ Packaging
+├── Database/
+│   ├── Database.sql
+│   ├── discount_system.sql
+│   ├── packaging_system.sql
+│   └── mockdata.sql
+├── store.php                   # หน้าร้านค้าสำหรับลูกค้า
+├── db.php                      # Database connection
+└── product_images/             # รูปสินค้า
+```
+
+---
+
 # 📋 สรุปการเปลี่ยนแปลงโปรเจค CONSTRUCTSHOP
 
 ## 🗄️ ฐานข้อมูล (Database)
