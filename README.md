@@ -218,6 +218,7 @@
 | `edit_material.php` | Admin + Manager + Stock |
 | `sidenav.php` | ซ่อน/แสดงเมนูตามสิทธิ์จริงของ User |
 
+### ดังรูปภาพ excel table
 <img width="810" height="514" alt="Image" src="https://github.com/user-attachments/assets/88059bda-fc67-4baa-aa5f-baab7f5e3e1e" />
 
 * **Admin:** เข้าถึงทุกฟังก์ชันของระบบ
