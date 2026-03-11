@@ -435,3 +435,46 @@ construction_shop/
 | **Base Unit แสดง** | ดึง `base_unit` ของสินค้า มาแสดงใน label และ preview |
 
 ---
+
+---
+
+# 🚨 Troubleshooting — MySQL รันไม่ได้หลังอัปเดต Windows
+
+## อาการ
+- กด **Start MySQL** ใน XAMPP แล้ว**ขึ้นแดงทันที**
+- Log แสดง: `Error: MySQL shutdown unexpectedly`
+- phpMyAdmin แสดง: `Cannot connect: Invalid settings`
+
+## สาเหตุ
+Windows Update ทำให้ **Aria storage engine log เสียหาย** และ/หรือ **MySQL system tables เสียหาย** ใน folder `mysql` ของ data directory
+
+---
+
+## ✅ วิธีแก้ที่ได้ผล (ทำตามลำดับ)
+
+### ขั้นที่ 1 — ดู Error Log
+เปิดไฟล์ `G:\xampp\mysql\data\mysql_error.log` แล้วมองหาบรรทัด `[ERROR]`
+
+### ขั้นที่ 2 — ลบ Aria Log (ถ้า error บอก "Aria recovery failed")
+1. หยุด MySQL ใน XAMPP
+2. ไปที่ `G:\xampp\mysql\data\`
+3. ลบ 2 ไฟล์: **`aria_log.00000001`** และ **`aria_log_control`**
+4. Start MySQL ใหม่
+
+### ขั้นที่ 3 — แทนที่ MySQL System Tables ด้วย Backup (วิธีที่ได้ผล ✅)
+> ใช้เมื่อ error บอก `Could not open mysql.plugin table` หรือ `Failed to initialize plugins`
+
+1. **Backup ข้อมูลโปรเจคก่อน!**  
+   คัดลอก `G:\xampp\mysql\data\db_construction_materials` ไปเก็บไว้บน Desktop
+
+2. หยุด MySQL ใน XAMPP
+
+3. เปิด `G:\xampp\mysql\data\` → **ลบ folder ชื่อ `mysql`** (เฉพาะ folder นี้เท่านั้น)
+
+4. เปิด `G:\xampp\mysql\backup\` → คัดลอก folder **`mysql`** มาวางใน `G:\xampp\mysql\data\`
+
+5. Start MySQL ใน XAMPP → ขึ้นสีเขียว ✅
+
+> ข้อมูลใน `db_construction_materials` **ไม่หาย** เพราะ user database เก็บแยกจาก system tables
+
+---
