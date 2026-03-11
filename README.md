@@ -440,6 +440,8 @@ construction_shop/
 
 # 🚨 Troubleshooting — MySQL รันไม่ได้หลังอัปเดต Windows
 
+<img width="1516" height="894" alt="Image" src="https://github.com/user-attachments/assets/23fa7653-8d3c-4658-9fa4-115e70af29dc" />
+
 ## อาการ
 - กด **Start MySQL** ใน XAMPP แล้ว**ขึ้นแดงทันที**
 - Log แสดง: `Error: MySQL shutdown unexpectedly`
